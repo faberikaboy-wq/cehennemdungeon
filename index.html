@@ -29,7 +29,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 body.t{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 body.t #g{width:min(100vw,calc(100dvh*1.6))}body.t #mm{top:52px}
 #tc{position:fixed;inset:0;z-index:50;display:none;touch-action:none}
-#jb{position:absolute;display:none;width:100px;height:100px;border-radius:50%;border:2px solid #fff6;background:#fff1;pointer-events:none}
+#jb{position:absolute;left:36px;bottom:36px;width:100px;height:100px;border-radius:50%;border:2px solid #fff6;background:#fff1;pointer-events:none}
 #jk{position:absolute;left:30px;top:30px;width:40px;height:40px;border-radius:50%;background:#fff5}
 .tb{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#c0281c88;border:2px solid #fff6;color:#fff;font:900 12px "Arial Black",sans-serif;text-shadow:1px 1px 0 #000;touch-action:none}
 .tb.on{background:#ffd040aa}
@@ -55,7 +55,7 @@ body.t #g{width:min(100vw,calc(100dvh*1.6))}body.t #mm{top:52px}
 <div id="msg"><h1 id="t">DOOM</h1><p id="s"></p><div id="cds"></div></div>
 </div>
 <script>
-const TOUCH=matchMedia('(pointer:coarse)').matches,W=400,H=250,N=48,$=i=>document.getElementById(i),cv=$('c'),ctx=cv.getContext('2d');cv.width=W;cv.height=H;
+let TOUCH=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window||navigator.maxTouchPoints>0;const W=400,H=250,N=48,$=i=>document.getElementById(i),cv=$('c'),ctx=cv.getContext('2d');cv.width=W;cv.height=H;
 const R=(a,b)=>a+Math.random()*(b-a),RI=(a,b)=>Math.floor(R(a,b+1)),cvs=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
 /* ---------- procedural textures & sprites ---------- */
 function tex(k){const c=cvs(64,64),s=c.getContext('2d'),im=s.createImageData(64,64),d=im.data;
@@ -228,22 +228,25 @@ let wsC='';function hud(){if(TOUCH&&tcS!==(st==1)){tcS=st==1;$('tc').style.displ
   const e=it.find(o=>o.k=='x');if(e&&seen[e.y|0][e.x|0]){m.fillStyle='#4f8';m.fillRect(e.x*s-2,e.y*s-2,4,4)}
   m.fillStyle='#f33';m.fillRect(px*s-1.5,py*s-1.5,3,3);m.strokeStyle='#f33';m.beginPath();m.moveTo(px*s,py*s);m.lineTo(px*s+dx*6,py*s+dy*6);m.stroke()}}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&st==1){st=4;show('DURAKLATILDI','Devam etmek için dokun')}});
-if(TOUCH){document.body.classList.add('t');addEventListener('contextmenu',e=>e.preventDefault());
+function initTouch(){if(document.getElementById('tc'))return;TOUCH=true;document.body.classList.add('t');addEventListener('contextmenu',e=>e.preventDefault());
  const rot=document.createElement('div');rot.id='rot';rot.textContent='Telefonu yatay çevir ↻';document.body.appendChild(rot);
  const tc=document.createElement('div');tc.id='tc';tc.innerHTML='<div id="jb"><div id="jk"></div></div><div class="tb" id="bF">ATEŞ</div><div class="tb" id="bD">DASH</div><div class="tb" id="bG">İNFAZ</div><div id="top"><div class="tb x" id="bW">⇄</div><div class="tb x" id="bM">▦</div><div class="tb x" id="bP">❚❚</div></div>';document.body.appendChild(tc);
- let jid=null,jx0=0,jy0=0,lid=null,lx=0;
- tc.addEventListener('pointerdown',e=>{if(e.target.classList.contains('tb'))return;e.preventDefault();
-  if(e.clientX<innerWidth*.45){if(jid===null){jid=e.pointerId;jx0=e.clientX;jy0=e.clientY;$('jb').style.cssText='display:block;left:'+(jx0-50)+'px;top:'+(jy0-50)+'px';$('jk').style.transform=''}}
-  else if(lid===null){lid=e.pointerId;lx=e.clientX}});
- tc.addEventListener('pointermove',e=>{if(e.pointerId===jid){let x=e.clientX-jx0,y=e.clientY-jy0;const d=Math.hypot(x,y),m=50;jr=d>m*1.25;if(d>m){x*=m/d;y*=m/d}js=Math.abs(x)>8?x/m:0;jf=Math.abs(y)>8?-y/m:0;$('jk').style.transform='translate('+x+'px,'+y+'px)'}
-  else if(e.pointerId===lid){a+=(e.clientX-lx)*.007;lx=e.clientX}});
- const up=e=>{if(e.pointerId===jid){jid=null;js=jf=0;jr=0;$('jb').style.display='none'}if(e.pointerId===lid)lid=null};
- tc.addEventListener('pointerup',up);tc.addEventListener('pointercancel',up);
- const bt=(id,dn,uf)=>{const b=$(id),u=()=>{b.classList.remove('on');uf&&uf()};b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(x){}b.classList.add('on');dn()});b.addEventListener('pointerup',u);b.addEventListener('pointercancel',u)};
+ let jid=null,jx0=0,jy0=0,lid=null,lx=0;const JB=$('jb'),JK=$('jk'),NP={passive:false},
+ T=f=>e=>{e.preventDefault();for(const t of e.changedTouches)f(t)},
+ home=()=>{JB.style.left='36px';JB.style.top='auto';JB.style.bottom='36px';JK.style.transform=''};
+ tc.addEventListener('touchstart',T(t=>{if(t.target.classList&&t.target.classList.contains('tb'))return;
+  if(t.clientX<innerWidth*.5){if(jid===null){jid=t.identifier;jx0=t.clientX;jy0=t.clientY;JB.style.left=(jx0-50)+'px';JB.style.top=(jy0-50)+'px';JB.style.bottom='auto';JK.style.transform=''}}
+  else if(lid===null){lid=t.identifier;lx=t.clientX}}),NP);
+ tc.addEventListener('touchmove',T(t=>{if(t.identifier===jid){let x=t.clientX-jx0,y=t.clientY-jy0;const d=Math.hypot(x,y),m=50;jr=d>m*1.25;if(d>m){x*=m/d;y*=m/d}js=Math.abs(x)>6?x/m:0;jf=Math.abs(y)>6?-y/m:0;JK.style.transform='translate('+x+'px,'+y+'px)'}
+  else if(t.identifier===lid){a+=(t.clientX-lx)*.007;lx=t.clientX}}),NP);
+ const up=T(t=>{if(t.identifier===jid){jid=null;js=jf=0;jr=0;home()}if(t.identifier===lid)lid=null});
+ tc.addEventListener('touchend',up,NP);tc.addEventListener('touchcancel',up,NP);
+ const bt=(id,dn,uf)=>{const b=$(id),u=e=>{e.preventDefault();b.classList.remove('on');uf&&uf()};b.addEventListener('touchstart',e=>{e.preventDefault();b.classList.add('on');dn()},NP);b.addEventListener('touchend',u,NP);b.addEventListener('touchcancel',u,NP)};
  bt('bF',()=>fh=1,()=>fh=0);bt('bD',dash);bt('bG',glory);
  bt('bW',()=>{for(let k=1;k<5;k++){const j=(cur+k)%4;if(have[j]){cur=j;break}}});
  bt('bM',()=>{mm=!mm;$('mm').style.display=mm?'block':'none'});
  bt('bP',()=>{if(st==1){st=4;show('DURAKLATILDI','Devam etmek için dokun')}})}
+if(TOUCH)initTouch();else addEventListener('touchstart',()=>{if(!TOUCH)initTouch()},{once:true,passive:true});
 newGame();let last=performance.now();
 (function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(st==1)update(dt);render();hud();requestAnimationFrame(loop)})(last);
 </script>
